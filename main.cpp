@@ -4,27 +4,7 @@ Nom du fichier :    	henry_labo16.cpp
 Auteur(s)      :    	Nicolas Henry
 Date creation  :    	31.10.2021
 Laboratoire n° :    	16
-Description    :		Ce laboratoire implémente la méthode de cryptographie à clé
- 							publique proposée en 1973 par Clifford Christopher Cocks,
- 							connue sous le nom de RSA. Programme qui demande à
- 							l’utilisateur deux nombres premiers p != q ainsi qu’un nombre
- 							e premier avec (p - 1) * (q - 1) (on se limitera à des
- 							valeurs p * q et e < 2^31 - 1). Le programme vérifie
- 							que p et q sont très probablement premier avec un test rapide
- 							(test_rapide_primalite(uint32_t nombre)). Le programme calcule d,
- 							l’inverse de e % (p - 1) * (q - 1) avec l’algorithme
- 							d’Euclide étendu (euclide_etendu(int32_t nombre1, int32_t
- 							nombre2, int32_t& inverse)). Le programme affiche la
- 							clé publique (n et e) ainsi que la clé secrète d. Finalement,
- 							le programme vérifie que (m^e % n)^d % n === m pour
- 							tout m < n, autrement dit, on arrive bien à retrouver
- 							univoquement le message d’origine m à partir du message
- 							crypté c = m^e % n. À noter que pour ce programme, les types
- 							utilisés sont uint32_t, int32_t et uint64_t, vu que nous
- 							utilisons des nombres qui peuvent très vite être grands,
- 							ainsi que plus le nombre est grand, plus la "sécurité" sera
- 							élevée, il est important de s'assurer que le type utilisé
- 							permette les calculs souhaité.
+Description    :		Ce laboratoire implémente la méthode de cryptographie à clé publique proposée en 1973 par Clifford Christopher Cocks, connue sous le nom de RSA. Programme qui demande à l’utilisateur deux nombres premiers p != q ainsi qu’un nombre e premier avec (p - 1) * (q - 1) (on se limitera à des valeurs p * q et e < 2^31 - 1). Le programme vérifie que p et q sont très probablement premier avec un test rapide (test_rapide_primalite(uint32_t nombre)). Le programme calcule d, l’inverse de e % (p - 1) * (q - 1) avec l’algorithme d’Euclide étendu (euclide_etendu(int32_t nombre1, int32_t nombre2, int32_t& inverse)). Le programme affiche la clé publique (n et e) ainsi que la clé secrète d. Finalement, le programme vérifie que (m^e % n)^d % n === m pour tout m < n, autrement dit, on arrive bien à retrouver univoquement le message d’origine m à partir du message crypté c = m^e % n. À noter que pour ce programme, les types utilisés sont uint32_t, int32_t et uint64_t, vu que nous utilisons des nombres qui peuvent très vite être grands, ainsi que plus le nombre est grand, plus la "sécurité" sera élevée, il est important de s'assurer que le type utilisé permette les calculs souhaité.
 -----------------------------------------------------------------------------------
 */
 
@@ -35,12 +15,14 @@ Description    :		Ce laboratoire implémente la méthode de cryptographie à cl�
 
 using namespace std;
 
-//La graine va servir à générer un nombre aléatoire. Il est déclarer hors du main
-// afin d'être accessible dans toutes les fonctions. C'est un subterfuge pour ce
-// labo, il est fortement décommendé de faire ceci pour de la vrai cryptographie.
-// le nombre choisi pour la graine est aléatoire, d'autres chiffres iraient aussi.
+/**
+ * La graine va servir à générer un nombre aléatoire. Il est déclarer hors du main
+ * afin d'être accessible dans toutes les fonctions. C'est un subterfuge pour ce
+ * labo, il est fortement décommendé de faire ceci pour de la vrai cryptographie.
+ * le nombre choisi pour la graine est aléatoire, d'autres chiffres iraient aussi.
+ */
 const uint32_t GRAINE = 27387;
-auto generateurAleatoire = bind(uniform_int_distribution<uint32_t>(2, numeric_limits<uint32_t>::max()), mt19937(GRAINE));
+auto generateur_aleatoire = bind(uniform_int_distribution<uint32_t>(2, numeric_limits<uint32_t>::max()), mt19937(GRAINE));
 
 /**
  *
@@ -69,7 +51,7 @@ uint32_t exponentiation_modulaire(uint64_t base, uint32_t exposant, uint32_t mod
 bool test_rapide_primalite(uint32_t nombre);
 
 /**
- * @brief Cette fonction retourne 2 éléments, le PGDC en valeur de return, ainsi
+ * @brief Cette fonction retourne 2 éléments, le PGDC en return, ainsi
  * que l'inverse par référence. L'inverse est le nombre qui permet de retrouver le
  * même résultat de (nombre^x % modulo) et (nombre^y % modulo), dans ce cas, y est
  * l'inverse de x et le résultat serait identique. Plus d'informations sur :
@@ -104,24 +86,25 @@ bool est_identique(uint32_t nombre1, uint32_t nombre2);
 bool est_overflow(uint32_t nombre1, uint32_t nombre2);
 
 int main() {
-	//p, q et e sont des nombres premiers saisis par l'utilisateur. Dans ce
-	// programme, ils sont nommés de cette manière car cela reprend le nommage du
-	// chiffrement RSA. la variable e fait partie de la clé publique.
+	/**
+	 * p, q et e sont des nombres premiers saisis par l'utilisateur. Dans ce
+	 * programme, ils sont nommés de cette manière car cela reprend le nommage du
+	 * chiffrement RSA. la variable e fait partie de la clé publique.
+	 */
 	uint32_t p, q, e;
 
 	//Saisie de 2 nombres premiers (p et q).
 	bool saisie_fausse;
 	cout << "Veuillez entrer 2 nombres premier ou p est différent de q et inferieur a 2147483647" << endl;
 
-	do{
+	do {
 		cin >> p >> q;
 		/**
 		 * On vérifie si p et q sont différents, ainsi que s'ils sont premier et
 		 * qu'ils ne provoquent pas un débordement.
 		 */
 
-		if (cin.fail() || est_identique(p, q) || !test_rapide_primalite(p) || !test_rapide_primalite(
-			q) || est_overflow(p, q)){
+		if (cin.fail() || est_identique(p, q) || !test_rapide_primalite(p) || !test_rapide_primalite(q) || est_overflow(p, q)) {
 			saisie_fausse = true;
 			cin.clear(); //Reset des bits d'erreurs.
 			cout << "Saisie incorrecte. Veuillez svp recommencer." << endl;
@@ -154,13 +137,15 @@ int main() {
 		 * On verifie le pgdc de phi_euler et e, et on retourne l'inverse pour d On
 		 * verifie également si e est plus petit que phi_euler.
 		 */
-		if (cin.fail() || (euclide_etendu(int32_t(phi_euler), int32_t(e), d) == 1 && e < phi_euler)) {
-			saisie_fausse = false;
-		} else {
+
+		if (cin.fail() || !((euclide_etendu(int32_t(phi_euler), int32_t(e), d) == 1) && e < phi_euler)) {
 			saisie_fausse = true;
 			cin.clear(); //Reset des bits d'erreurs
 			cout << "Saisie incorrecte. Veuillez svp recommencer." << endl;
+		} else {
+			saisie_fausse = false;
 		}
+		cin.ignore(numeric_limits<streamsize>::max(), '\n'); // vide le buffer.
 	} while(saisie_fausse);
 
 	/**
@@ -180,13 +165,14 @@ int main() {
 	do {
 		cin >> message;
 		//On verifie si le message est plus petit que n.
-		if (cin.fail() || message < n) {
-			saisie_fausse = false;
-		} else {
+		if (cin.fail() || message >= n) {
 			saisie_fausse = true;
 			cin.clear(); //Reset des bits d'erreurs
 			cout << "Saisie incorrecte. Veuillez svp recommencer." << endl;
+		} else {
+			saisie_fausse = false;
 		}
+		cin.ignore(numeric_limits<streamsize>::max(), '\n'); // vide le buffer.
 	} while(saisie_fausse);
 
 	//On chiffre le message.
@@ -225,7 +211,7 @@ bool test_rapide_primalite(uint32_t nombre) {
 	}
 	/**
 	 * 2 est le premier nombre premier et empêche tous les nombres paires d'être
-	 * premier. Tester si l'utilisateur rentre 3 (car generateurAleatoire
+	 * premier. Tester si l'utilisateur rentre 3 (car generateur_aleatoire
 	 * retournera 2 et ça ferra modulo 2 donc boucle infinie plus tard dans la
 	 * fonction). */
 	if (nombre == 2 || nombre == 3) {
@@ -237,7 +223,7 @@ bool test_rapide_primalite(uint32_t nombre) {
 	for (int i = 1; i <= 10; i++) {
 		//Generation d'un nombre aléatoire, on vérifie avec % si le nombre dépasse nombre-1
 		do {
-			nombre_aleatoire = generateurAleatoire() % nombre_moins_1;
+			nombre_aleatoire = generateur_aleatoire() % nombre_moins_1;
 		} while(nombre_aleatoire < 2);
 		/**
 		 * Si l'exponentiation modulaire retourne autre chose que 1, c'est que le
